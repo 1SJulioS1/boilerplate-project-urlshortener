@@ -30,46 +30,40 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl/:short_url", async (req, res) => {
-  /* const stringIsAValidUrl = (s) => {
-    try {
-      new URL(s);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }; */
+app.post("/api/shorturl", async (req, res) => {
   const db = await connectToDatabase();
   const collection = db.collection("URL");
-  if (!req.params.short_url) {
-    const duplicate = await collection.findOne({ original_url: req.body.url });
-    if (duplicate) {
+  const duplicate = await collection.findOne({ original_url: req.body.url });
+  if (duplicate) {
+    return res.json({
+      original_url: req.body.url,
+      short_url: duplicate.short_url,
+    });
+  } else {
+    if (validUrl.isWebUri(req.body.url)) {
+      const short_url = nanoid(4);
+      const result = await collection.insertOne({
+        original_url: req.body.url,
+        short_url,
+      });
       return res.json({
         original_url: req.body.url,
-        short_url: duplicate.short_url,
+        short_url,
       });
     } else {
-      if (validUrl.isWebUri(req.body.url)) {
-        const short_url = nanoid(4);
-        const result = await collection.insertOne({
-          original_url: req.body.url,
-          short_url,
-        });
-        return res.json({
-          original_url: req.body.url,
-          short_url,
-        });
-      } else {
-        return res.json({ error: "invalid url" });
-      }
+      return res.json({ error: "invalid url" });
     }
-  } else {
-    const result = await collection.findOne({
-      short_url: req.params.short_url,
-    });
-    if (result) {
-      res.redirect(result.original_url);
-    }
+  }
+});
+app.post("/api/shorturl/:short_url", async (req, res) => {
+  const db = await connectToDatabase();
+  const collection = db.collection("URL");
+
+  const result = await collection.findOne({
+    short_url: req.params.short_url,
+  });
+  if (result) {
+    res.redirect(result.original_url);
   }
 });
 app.listen(port, function () {
