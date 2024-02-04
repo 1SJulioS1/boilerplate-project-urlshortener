@@ -42,8 +42,7 @@ app.post("/api/shorturl/:url?", async (req, res) => {
   const db = await connectToDatabase();
   const collection = db.collection("URL");
   if (!req.params.url) {
-    const duplicate = await collection.findOne({ original_url: req.body.url });
-    console.log(duplicate);
+    const duplicate = await collection.findOne({ short: req.body.url });
     if (duplicate) {
       return res.json({
         original_url: req.body.url,
@@ -55,7 +54,6 @@ app.post("/api/shorturl/:url?", async (req, res) => {
         original_url: req.body.url,
         short_url,
       });
-      console.log(result);
       return res.json({
         original_url: req.body.url,
         short_url,
@@ -65,7 +63,6 @@ app.post("/api/shorturl/:url?", async (req, res) => {
     const result = await collection.findOne({
       short_url: req.params.url,
     });
-    console.log(result);
     if (result) {
       if (validUrl.isUri(result.original_url)) {
         res.redirect(result.original_url);
