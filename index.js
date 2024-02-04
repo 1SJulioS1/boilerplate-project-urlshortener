@@ -6,6 +6,7 @@ const URL = require("url").URL;
 const bodyParser = require("body-parser");
 const { connectToDatabase } = require("./config/dbConn.js");
 const { ObjectId } = require("mongodb");
+const { nanoid } = require("nanoid");
 var validUrl = require("valid-url");
 
 // Basic Configuration
@@ -30,36 +31,44 @@ app.get("/api/hello", function (req, res) {
 });
 
 app.post("/api/shorturl/:url?", async (req, res) => {
-  const stringIsAValidUrl = (s) => {
+  /* const stringIsAValidUrl = (s) => {
     try {
       new URL(s);
       return true;
     } catch (err) {
       return false;
     }
-  };
+  }; */
   const db = await connectToDatabase();
   const collection = db.collection("URL");
   if (!req.params.url) {
-    const duplicate = await collection.findOne({ url: req.body.url });
+    const duplicate = await collection.findOne({ original_url: req.body.url });
+    console.log(duplicate);
     if (duplicate) {
-      return res.json({ original_url: req.body.url, short_url: duplicate._id });
-    } else {
-      const result = await collection.insertOne({
-        url: req.body.url,
-      });
       return res.json({
         original_url: req.body.url,
-        short_url: result.insertedId.toString(),
+        short_url: duplicate.short_url,
+      });
+    } else {
+      const short_url = nanoid(4);
+      const result = await collection.insertOne({
+        original_url: req.body.url,
+        short_url,
+      });
+      console.log(result);
+      return res.json({
+        original_url: req.body.url,
+        short_url,
       });
     }
   } else {
     const result = await collection.findOne({
-      _id: new ObjectId(req.params.url),
+      short_url: req.params.url,
     });
+    console.log(result);
     if (result) {
-      if (validUrl.isUri(result.url)) {
-        res.redirect(result.url);
+      if (validUrl.isUri(result.original_url)) {
+        res.redirect(result.original_url);
       } else {
         return res.json({ error: "invalid url" });
       }
