@@ -55,7 +55,7 @@ app.post("/api/shorturl", async (req, res) => {
     }
   }
 });
-app.post("/api/shorturl/:short_url", async (req, res) => {
+app.get("/api/shorturl/:short_url", async (req, res) => {
   const db = await connectToDatabase();
   const collection = db.collection("URL");
 
