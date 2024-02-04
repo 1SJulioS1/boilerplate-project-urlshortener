@@ -42,33 +42,34 @@ app.post("/api/shorturl/:url?", async (req, res) => {
   const db = await connectToDatabase();
   const collection = db.collection("URL");
   if (!req.params.url) {
-    const duplicate = await collection.findOne({ short: req.body.url });
+    const duplicate = await collection.findOne({ original_url: req.body.url });
     if (duplicate) {
+      console.log("Duplicated URL");
       return res.json({
         original_url: req.body.url,
         short_url: duplicate.short_url,
       });
     } else {
-      const short_url = nanoid(4);
-      const result = await collection.insertOne({
-        original_url: req.body.url,
-        short_url,
-      });
-      return res.json({
-        original_url: req.body.url,
-        short_url,
-      });
+      if (validUrl.isWebUri(req.body.url)) {
+        const short_url = nanoid(4);
+        const result = await collection.insertOne({
+          original_url: req.body.url,
+          short_url,
+        });
+        return res.json({
+          original_url: req.body.url,
+          short_url,
+        });
+      } else {
+        return res.json({ error: "invalid url" });
+      }
     }
   } else {
     const result = await collection.findOne({
       short_url: req.params.url,
     });
     if (result) {
-      if (validUrl.isUri(result.original_url)) {
-        res.redirect(result.original_url);
-      } else {
-        return res.json({ error: "invalid url" });
-      }
+      res.redirect(result.original_url);
     }
   }
 });
