@@ -30,7 +30,7 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl", async (req, res) => {
+app.post("/api/shorturl/", async (req, res) => {
   /* const stringIsAValidUrl = (s) => {
     try {
       new URL(s);
