@@ -30,7 +30,7 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl/", async (req, res) => {
+app.post("/api/shorturl/:short_url", async (req, res) => {
   /* const stringIsAValidUrl = (s) => {
     try {
       new URL(s);
@@ -41,10 +41,9 @@ app.post("/api/shorturl/", async (req, res) => {
   }; */
   const db = await connectToDatabase();
   const collection = db.collection("URL");
-  if (!req.params.url) {
+  if (!req.params.short_url) {
     const duplicate = await collection.findOne({ original_url: req.body.url });
     if (duplicate) {
-      console.log("Duplicated URL");
       return res.json({
         original_url: req.body.url,
         short_url: duplicate.short_url,
@@ -66,7 +65,7 @@ app.post("/api/shorturl/", async (req, res) => {
     }
   } else {
     const result = await collection.findOne({
-      short_url: req.params.url,
+      short_url: req.params.short_url,
     });
     if (result) {
       res.redirect(result.original_url);
